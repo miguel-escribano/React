@@ -1,279 +1,165 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 
-// Use this to get lucide-react icons, as direct imports may fail in some environments
+// --- Inline icons (no external deps) ---
 const getLucideIcon = (name) => {
   const icons = {
-    'CheckCircle': ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-8.07"/><path d="M22 4 12 14.01l-3-3"/></svg>,
-    'Hammer': ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="m15 12-8.37 8.37a2 2 0 1 1-3.46-3.46L11.54 8"/><path d="m17.65 15.65-3.35 3.35a2 2 0 1 1-3.46-3.46l3.35-3.35a2 2 0 1 1 3.46 3.46z"/><path d="m20.5 13.5-1 1"/><path d="m20.5 9.5-1 1"/><path d="m20.5 5.5-1 1"/></svg>,
-    'Wrench': ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94-7.94l-3.78 3.78a1 1 0 0 0 0 1.4l6.4 6.4a1 1 0 0 0 1.4 0"/><path d="m21.2 13.4-1.4 1.4a1 1 0 0 1-1.4 0l-6.4-6.4a1 1 0 0 1 0-1.4l1.4-1.4a1 1 0 0 1 1.4 0l6.4 6.4a1 1 0 0 1 0 1.4z"/><path d="M5.5 20.5 2 22l1.5-3.5 3.5-3.5 2.5 2.5-3.5 3.5z"/></svg>,
-    'ClipboardList': ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><rect width="8" height="4" x="8" y="2" rx="1" ry="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 15h4"/><path d="M8 11h.01"/><path d="M8 15h.01"/></svg>,
-    'RefreshCcw': ({ className }) => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.75 2.85"/><path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.75-2.85"/><path d="M6 6l-3 3-3 3"/><path d="M18 18l3-3 3-3"/></svg>
+    CheckCircle: ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M22 11.08V12a10 10 0 1 1-5.93-8.07" />
+        <path d="M22 4 12 14.01l-3-3" />
+      </svg>
+    ),
+    Wrench: ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="m15 6-2 2 6 6 2-2-6-6z" />
+        <path d="m3 21 3-1 9.5-9.5-2.5-2.5L3 17l0 4z" />
+      </svg>
+    ),
+    ClipboardList: ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <rect width="8" height="4" x="8" y="2" rx="1" ry="1" />
+        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+        <path d="M12 11h4" />
+        <path d="M12 15h4" />
+        <path d="M8 11h.01" />
+        <path d="M8 15h.01" />
+      </svg>
+    ),
+    RefreshCcw: ({ className }) => (
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+        <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.75 2.85" />
+        <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.75-2.85" />
+        <path d="M6 6l-3 3-3 3" />
+        <path d="M18 18l3-3 3-3" />
+      </svg>
+    ),
   };
-  return icons[name];
+  return icons[name] || (() => <span className="inline-block w-4 h-4">•</span>);
 };
 
-// Data for all projects
+// --- Projects data (with imageUrl) ---
 const projectsData = [
-  {
-    project: 'Expo City Dubai (UAE)',
-    description: 'Sustainable community built on former Expo 2020 site, featuring Al Wasl Plaza, Terra Pavilion, and cutting-edge architecture.',
-    status: '✅ Operational',
-    iaqDriver: 'WELL Community Gold & 100% LEED-certified',
-    potentialPositioning: 'Integrate IAQ into Siemens/Cisco smart city platform via Urban Lab',
-    potentialKeyContacts: 'Head of Sustainability, Urban Lab Director',
-    website: 'https://www.expocitydubai.com/',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Evening_Two_at_the_Expo_%2851733837998%29.jpg/1024px-Evening_Two_at_the_Expo_%2851733837998%29.jpg',
-    imageCredit: 'Al Wasl Plaza — Wikimedia Commons'
-  },
-  {
-    project: 'Masdar City (UAE)',
-    description: "Abu Dhabi's pioneering sustainable urban community powered by renewable energy, home to IRENA headquarters.",
-    status: '✅ Operational',
-    iaqDriver: 'Net-zero buildings, WELL Gold targets',
-    potentialPositioning: 'Work with sustainability team and Disrupt-X for IAQ in schools/offices',
-    potentialKeyContacts: 'Head of Sustainability, Free Zone Innovation Manager',
-    website: 'https://masdar.ae/',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Multiuse_Hall_of_MBZUAI.jpg/250px-Multiuse_Hall_of_MBZUAI.jpg',
-    imageCredit: 'MBZUAI hall in Masdar City — Wikimedia Commons'
-  },
-  {
-    project: 'The Red Sea Project (KSA)',
-    description: 'Regenerative luxury tourism destination with 50 hotels across 22 islands and 6 inland sites by 2030.',
-    status: '🚧 Phase 1 Open',
-    iaqDriver: 'All hotels pursuing LEED IEQ credits',
-    potentialPositioning: 'Install IAQ during resort commissioning for compliance and wellness branding',
-    potentialKeyContacts: 'Director of Operations – Environment, Senior Sustainability Manager',
-    website: 'https://www.redseaglobal.com/en/our-destinations/the-red-sea',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Six_Sense_Souther_Dunes_Resort_central_oasis_%2853709369829%29.jpg/250px-Six_Sense_Souther_Dunes_Resort_central_oasis_%2853709369829%29.jpg',
-    imageCredit: 'Six Senses Southern Dunes — Wikimedia Commons'
-  },
-  {
-    project: 'AMAALA (KSA)',
-    description: 'Ultra-luxury wellness destination on Red Sea coast, focusing on regenerative tourism and marine conservation.',
-    status: '🚧 Opening 2025',
-    iaqDriver: 'LEED Platinum (Cities & Communities) pre-certified',
-    potentialPositioning: 'Target wellness resorts and Marine Life Institute for IAQ integration',
-    potentialKeyContacts: 'Program Director, Sustainability Manager',
-    website: 'https://www.redseaglobal.com/en/our-destinations/amaala',
-    // fallback to favicon until a curated hero is added
-  },
-  {
-    project: 'KAFD (KSA)',
-    description: "King Abdullah Financial District - World's largest LEED Platinum mixed-use business center in Riyadh.",
-    status: '✅ Operational',
-    iaqDriver: 'WELL/ESG upgrades for tenants',
-    potentialPositioning: 'Retrofit IAQ in smart district control center and office towers',
-    potentialKeyContacts: 'Head of Sustainability, Head of Smart Services',
-    website: 'https://www.kafd.sa/',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/KAFD_seen_from_North_east_side_of_Riyadh_City.jpg/250px-KAFD_seen_from_North_east_side_of_Riyadh_City.jpg',
-    imageCredit: 'KAFD skyline — Wikimedia Commons'
-  },
-  {
-    project: 'Msheireb Downtown Doha (Qatar)',
-    description: "World's first sustainable downtown regeneration project in Qatar's capital with 99 LEED-certified buildings.",
-    status: '✅ Operational',
-    iaqDriver: 'LEED EQ prerequisites',
-    potentialPositioning: 'Integrate IAQ in Smart City control room and Platinum-rated offices',
-    potentialKeyContacts: 'Head of Innovation, Head of Facilities Management',
-    website: 'https://www.msheireb.com/',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Msheireb_Doha.jpg/250px-Msheireb_Doha.jpg',
-    imageCredit: 'Msheireb square — Wikimedia Commons'
-  },
-  {
-    project: 'Diriyah (KSA)',
-    description: 'Historic cultural destination and UNESCO World Heritage site transformation, birthplace of Saudi Arabia.',
-    status: '🚧 Under Development',
-    iaqDriver: 'LEED Platinum for Cities',
-    potentialPositioning: 'Deploy discreet IAQ in museums/hotels for conservation and comfort',
-    potentialKeyContacts: 'Environmental Sustainability Manager, Jacobs/Omrania PMO',
-    website: 'https://www.diriyah.sa/',
-  },
-  {
-    project: 'Jeddah Central (KSA)',
-    description: 'New central business district and urban development in Jeddah.',
-    status: '📋 Planning Phase',
-    iaqDriver: 'LEED/WELL readiness at design stage',
-    potentialPositioning: 'Specify IAQ with SOM/Aecom during planning of landmark venues',
-    potentialKeyContacts: 'Sustainability Director, Smart City Technology Lead',
-    website: 'https://jeddahcentral.com/',
-  },
-  {
-    project: 'Qiddiya (KSA)',
-    description: 'World\'s first city built for play - entertainment, sports, and cultural megaproject near Riyadh covering 360 km².',
-    status: '🚧 Under Construction',
-    iaqDriver: 'WELL and visitor comfort standards',
-    potentialPositioning: 'Install IAQ in indoor attractions',
-    potentialKeyContacts: 'COO, Director of Operations',
-    website: 'https://qiddiya.com/',
-  },
-  {
-    project: 'The Sustainable City – Dubai (UAE)',
-    description: 'Net-zero energy residential community with sustainable living practices.',
-    status: '✅ Operational',
-    iaqDriver: 'Net-zero community targeting WELL/LEED upgrades',
-    potentialPositioning: 'Pilot IAQ in villas, schools, and mall, scale to other Diamond projects',
-    potentialKeyContacts: 'Director of Innovation',
-    website: 'https://www.thesustainablecity.ae/',
-  },
-  {
-    project: 'The Sustainable City – Yiti (Oman)',
-    description: "First sustainable city in Oman, following Dubai's model.",
-    status: '🚧 Under Development',
-    iaqDriver: 'Net-zero emissions goal, Vision 2040',
-    potentialPositioning: 'Fit IAQ in show homes and public buildings',
-    potentialKeyContacts: 'Diamond CSO, OMRAN Project Director',
-    website: 'https://www.thesustainablecityyiti.com/',
-  },
-  {
-    project: 'AlNama Smart City (KSA)',
-    description: 'Smart city development with advanced technology integration.',
-    status: '📋 Planning Phase',
-    iaqDriver: 'Zero-carbon city concept with WELL framework',
-    potentialPositioning: 'Influence IAQ inclusion with URB during masterplan design',
-    potentialKeyContacts: 'URB CEO, CSO',
-    website: 'https://urb.ae/projects/alnamasmartcity/',
-  },
-  {
-    project: 'The LINE (NEOM) (KSA)',
-    description: '170km linear smart city in NEOM, designed for 9 million residents.',
-    status: '🚧 Under Construction',
-    iaqDriver: '“Clean Air for Everyone” pledge',
-    potentialPositioning: 'Embed IAQ in NEOM’s cognitive city AI system',
-    potentialKeyContacts: 'Environment/Sustainability Leads, Tech & Digital IoT Team',
-    website: 'https://www.neom.com/en-us/regions/theline',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/1/15/The_Line%2C_Saudi_Arabia.jpg/250px-The_Line%2C_Saudi_Arabia.jpg',
-    imageCredit: 'Artist concept of The LINE — Wikipedia'
-  },
-  {
-    project: 'Trojena (NEOM) (KSA)',
-    description: 'Mountain resort destination in NEOM with year-round skiing.',
-    status: '🚧 Under Construction',
-    iaqDriver: 'Wellness hub and ski resort comfort needs',
-    potentialPositioning: 'Install IAQ in hotels, lodges, and outdoor branding',
-    potentialKeyContacts: 'Trojena Environment Manager, Tech & Digital smart city team',
-    website: 'https://www.neom.com/en-us/regions/trojena',
-  },
-  {
-    project: 'Sindalah (NEOM) (KSA)',
-    description: 'Luxury island destination and global yachting hub in the Red Sea.',
-    status: '✅ Recently Opened',
-    iaqDriver: 'WELL-aligned luxury resort',
-    potentialPositioning: 'Use as IAQ testbed within NEOM smart monitoring',
-    potentialKeyContacts: 'NEOM Tourism – Sindalah Project Director, Environment Dept',
-    website: 'https://www.neom.com/en-us/regions/sindalah',
-  },
-  {
-    project: 'Madinat Al Irfan (Oman)',
-    description: 'Integrated urban development in Muscat with sustainable design.',
-    status: '✅ Operational',
-    iaqDriver: 'WELL/LEED for Oman Vision 2040',
-    potentialPositioning: 'Partner with Omran/MAF to integrate IAQ in new developments',
-    potentialKeyContacts: 'Omran CDO, JV Development Managers',
-    website: 'https://www.omanconvention.com/en/our-city',
-  },
-  {
-    project: 'King Salman Park (KSA)',
-    description: "One of the world's largest urban parks in Riyadh.",
-    status: '🚧 Under Development',
-    iaqDriver: 'LEED/WELL potential in cultural and sports buildings',
-    potentialPositioning: 'Pilot IAQ in Visitor Pavilion via Parsons PMO',
-    potentialKeyContacts: 'COO/Operations Director, Parsons PM',
-    website: 'https://kingsalmanpark.sa/en',
-  },
-  {
-    project: 'Green Riyadh (KSA)',
-    description: 'Massive tree-planting initiative to plant 7.5 million trees across Riyadh.',
-    status: '🚧 Ongoing',
-    iaqDriver: 'Saudi Green Initiative, WELL Community potential',
-    potentialPositioning: 'Deploy compact outdoor AQ network to track planting impact',
-    potentialKeyContacts: 'Program Director, Environmental Division, Ministry of Environment',
-    website: 'https://riyadhgreen.sa/en',
-  },
-  {
-    project: 'Sports Boulevard (KSA)',
-    description: 'Linear park and sports development connecting various districts in Riyadh.',
-    status: '🚧 Under Development',
-    iaqDriver: 'ActiveScore and WELL potential',
-    potentialPositioning: 'Monitor indoor sports IAQ and outdoor AQ along mobility corridor',
-    potentialKeyContacts: 'Technical Director, Turner & Townsend Sustainability Lead',
-    website: 'https://sportsboulevard.sa/en',
-  },
-  {
-    project: 'SPARK – King Salman Energy Park (KSA)',
-    description: 'Integrated energy industrial city in Eastern Province.',
-    status: '🚧 Under Development',
-    iaqDriver: 'LEED Silver (Communities) + Mostadam Gold',
-    potentialPositioning: 'Install IAQ in offices/housing via SPARK Utilities/Engie',
-    potentialKeyContacts: 'CEO/COO, Aramco Sustainability Team',
-    website: 'https://www.spark.sa/en/',
-  },
-  {
-    project: 'Lusail City (Qatar)',
-    description: 'Qatar\'s largest sustainable smart city and FIFA World Cup 2022 host, featuring 19 integrated districts.',
-    status: '✅ Operational',
-    iaqDriver: 'GSAS/LEED IAQ specs',
-    potentialPositioning: 'Integrate via FM providers and smart city OS partners',
-    potentialKeyContacts: 'Lusail City H&S/Sustainability Dept, Qatari Diar Smart City PMs',
-    website: 'https://www.lusail.com/',
-    imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Boats_in_Lusail_Marina.jpg/120px-Boats_in_Lusail_Marina.jpg',
-    imageCredit: 'Lusail Marina — Wikimedia Commons'
-  },
-  {
-    project: 'Saadiyat Cultural District (UAE)',
-    description: 'Cultural hub in Abu Dhabi featuring world-class museums and sustainable development.',
-    status: '✅ Operational',
-    iaqDriver: 'LEED/Estidama for museums',
-    potentialPositioning: 'Fit IAQ with FM providers for artifact conservation',
-    potentialKeyContacts: 'DCT Chairman, Culture Sector PMs',
-    website: 'https://saadiyatculturaldistrict.ae/',
-  },
-  {
-    project: 'Duqm Smart City (Oman)',
-    description: "Smart city development in Oman's Special Economic Zone.",
-    status: '🚧 Under Development',
-    iaqDriver: 'Harsh climate, OPAZ environmental compliance',
-    potentialPositioning: 'Launch AQ observatory with local ICT/environment partners',
-    potentialKeyContacts: 'Duqm Smart City CEO, OPAZ Director of Environmental Compliance',
-    website: 'https://www.duqmsmartcity.om/',
-  },
+  { project: 'Expo City Dubai (UAE)', description: 'Sustainable community built on former Expo 2020 site, featuring Al Wasl Plaza, Terra Pavilion, and cutting-edge architecture.', status: '✅ Operational', iaqDriver: 'WELL Community Gold & 100% LEED-certified', potentialPositioning: 'Integrate IAQ into Siemens/Cisco smart city platform via Urban Lab', potentialKeyContacts: 'Head of Sustainability, Urban Lab Director', website: 'https://www.expocitydubai.com/', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Evening_Two_at_the_Expo_%2851733837998%29.jpg/1024px-Evening_Two_at_the_Expo_%2851733837998%29.jpg', imageCredit: 'Al Wasl Plaza - Wikimedia Commons' },
+  { project: 'Masdar City (UAE)', description: "Abu Dhabi's pioneering sustainable urban community powered by renewable energy, home to IRENA headquarters.", status: '✅ Operational', iaqDriver: 'Net-zero buildings, WELL Gold targets', potentialPositioning: 'Work with sustainability team and Disrupt-X for IAQ in schools/offices', potentialKeyContacts: 'Head of Sustainability, Free Zone Innovation Manager', website: 'https://masdar.ae/', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Multiuse_Hall_of_MBZUAI.jpg/640px-Multiuse_Hall_of_MBZUAI.jpg', imageCredit: 'MBZUAI hall in Masdar City - Wikimedia Commons' },
+  { project: 'The Red Sea Project (KSA)', description: 'Regenerative luxury tourism destination with 50 hotels across 22 islands and 6 inland sites by 2030.', status: '🚧 Phase 1 Open', iaqDriver: 'All hotels pursuing LEED IEQ credits', potentialPositioning: 'Install IAQ during resort commissioning for compliance and wellness branding', potentialKeyContacts: 'Director of Operations - Environment, Senior Sustainability Manager', website: 'https://www.redseaglobal.com/en/our-destinations/the-red-sea', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f5/Six_Sense_Souther_Dunes_Resort_central_oasis_%2853709369829%29.jpg/1024px-Six_Sense_Souther_Dunes_Resort_central_oasis_%2853709369829%29.jpg', imageCredit: 'Six Senses Southern Dunes - Wikimedia Commons' },
+  { project: 'AMAALA (KSA)', description: 'Ultra-luxury wellness destination on Red Sea coast, focusing on regenerative tourism and marine conservation.', status: '🚧 Opening 2025', iaqDriver: 'LEED Platinum (Cities & Communities) pre-certified', potentialPositioning: 'Target wellness resorts and Marine Life Institute for IAQ integration', potentialKeyContacts: 'Program Director, Sustainability Manager', website: 'https://www.redseaglobal.com/en/our-destinations/amaala', imageUrl: 'https://images.thenationalnews.com/sites/default/files/styles/hero_section/public/articles/2022/10/18/Amaala-Marine-Life-Institute-5.jpg', imageCredit: 'Marine Life Institute, AMAALA - The National' },
+  { project: 'KAFD (KSA)', description: "King Abdullah Financial District - World's largest LEED Platinum mixed-use business center in Riyadh.", status: '✅ Operational', iaqDriver: 'WELL/ESG upgrades for tenants', potentialPositioning: 'Retrofit IAQ in smart district control center and office towers', potentialKeyContacts: 'Head of Sustainability, Head of Smart Services', website: 'https://www.kafd.sa/', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/KAFD_seen_from_North_east_side_of_Riyadh_City.jpg/1024px-KAFD_seen_from_North_east_side_of_Riyadh_City.jpg', imageCredit: 'KAFD skyline - Wikimedia Commons' },
+  { project: 'Msheireb Downtown Doha (Qatar)', description: "World's first sustainable downtown regeneration project in Qatar's capital with 99 LEED-certified buildings.", status: '✅ Operational', iaqDriver: 'LEED EQ prerequisites', potentialPositioning: 'Integrate IAQ in Smart City control room and Platinum-rated offices', potentialKeyContacts: 'Head of Innovation, Head of Facilities Management', website: 'https://www.msheireb.com/', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Msheireb_Doha.jpg/800px-Msheireb_Doha.jpg', imageCredit: 'Msheireb square - Wikimedia Commons' },
+  { project: 'Diriyah (KSA)', description: 'Historic cultural destination and UNESCO World Heritage site transformation, birthplace of Saudi Arabia.', status: '🚧 Under Development', iaqDriver: 'LEED Platinum for Cities', potentialPositioning: 'Deploy discreet IAQ in museums/hotels for conservation and comfort', potentialKeyContacts: 'Environmental Sustainability Manager, Jacobs/Omrania PMO', website: 'https://www.diriyah.sa/', imageUrl: 'https://www.diriyahcompany.sa/uploads/masterplan_homepage_thumbnail.jpg', imageCredit: 'Diriyah Masterplan - Diriyah Company' },
+  { project: 'Jeddah Central (KSA)', description: 'New central business district and urban development in Jeddah.', status: '📋 Planning Phase', iaqDriver: 'LEED/WELL readiness at design stage', potentialPositioning: 'Specify IAQ with SOM/Aecom during planning of landmark venues', potentialKeyContacts: 'Sustainability Director, Smart City Technology Lead', website: 'https://jeddahcentral.com/', imageUrl: 'https://saudipedia.com/images/projects/jeddahcentralproject.jpg', imageCredit: 'Jeddah Central Project - Saudipedia' },
+  { project: 'Qiddiya (KSA)', description: "World's first city built for play - entertainment, sports, and cultural megaproject near Riyadh covering 360 km².", status: '🚧 Under Construction', iaqDriver: 'WELL and visitor comfort standards', potentialPositioning: 'Install IAQ in indoor attractions', potentialKeyContacts: 'COO, Director of Operations', website: 'https://qiddiya.com/', imageUrl: 'https://qiddiya.com/wp-content/uploads/2023/12/Six-Flags-Qiddiya-Theme-Park.jpg', imageCredit: 'Qiddiya Theme Park - Qiddiya Official' },
+  { project: 'The Sustainable City - Dubai (UAE)', description: 'Net-zero energy residential community with sustainable living practices.', status: '✅ Operational', iaqDriver: 'Net-zero community targeting WELL/LEED upgrades', potentialPositioning: 'Pilot IAQ in villas, schools, and mall, scale to other Diamond projects', potentialKeyContacts: 'Director of Innovation', website: 'https://www.thesustainablecity.ae/' },
+  { project: 'The Sustainable City - Yiti (Oman)', description: "First sustainable city in Oman, following Dubai's model.", status: '🚧 Under Development', iaqDriver: 'Net-zero emissions goal, Vision 2040', potentialPositioning: 'Fit IAQ in show homes and public buildings', potentialKeyContacts: 'Diamond CSO, OMRAN Project Director', website: 'https://www.thesustainablecityyiti.com/', imageUrl: 'https://www.thesustainablecity-yiti.com/assets/images/yiti-masterplan.jpg', imageCredit: 'Sustainable City Yiti Masterplan - Official Site' },
+  { project: 'AlNama Smart City (KSA)', description: 'Smart city development with advanced technology integration.', status: '📋 Planning Phase', iaqDriver: 'Zero-carbon city concept with WELL framework', potentialPositioning: 'Influence IAQ inclusion with URB during masterplan design', potentialKeyContacts: 'URB CEO, CSO', website: 'https://urb.ae/projects/alnamasmartcity/', imageUrl: 'https://urb.ae/wp-content/uploads/2023/10/ALNAMA_SMART_CITY_MASTERPLAN.jpg', imageCredit: 'AlNama Smart City Masterplan - URB' },
+  { project: 'The LINE (NEOM) (KSA)', description: '170km linear smart city in NEOM, designed for 9 million residents.', status: '🚧 Under Construction', iaqDriver: '“Clean Air for Everyone” pledge', potentialPositioning: 'Embed IAQ in NEOM’s cognitive city AI system', potentialKeyContacts: 'Environment/Sustainability Leads, Tech & Digital IoT Team', website: 'https://www.neom.com/en-us/regions/theline', imageUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/1/15/The_Line%2C_Saudi_Arabia.jpg/640px-The_Line%2C_Saudi_Arabia.jpg', imageCredit: 'Artist concept of The LINE - Wikipedia' },
+  { project: 'Trojena (NEOM) (KSA)', description: 'Mountain resort destination in NEOM with year-round skiing.', status: '🚧 Under Construction', iaqDriver: 'Wellness hub and ski resort comfort needs', potentialPositioning: 'Install IAQ in hotels, lodges, and outdoor branding', potentialKeyContacts: 'Trojena Environment Manager, Tech & Digital smart city team', website: 'https://www.neom.com/en-us/regions/trojena', imageUrl: 'https://parametric-architecture.com/wp-content/uploads/2023/11/neom-trojena-construction-site-2.jpg', imageCredit: 'Trojena NEOM site - Parametric Architecture' },
+  { project: 'Sindalah (NEOM) (KSA)', description: 'Luxury island destination and global yachting hub in the Red Sea.', status: '✅ Recently Opened', iaqDriver: 'WELL-aligned luxury resort', potentialPositioning: 'Use as IAQ testbed within NEOM smart monitoring', potentialKeyContacts: 'NEOM Tourism - Sindalah Project Director, Environment Dept', website: 'https://www.neom.com/en-us/regions/sindalah', imageUrl: 'https://luxurylaunches.com/wp-content/uploads/2024/03/Sindalah-island-1.jpg', imageCredit: 'Sindalah Island - Luxury Launches' },
+  { project: 'Madinat Al Irfan (Oman)', description: 'Integrated urban development in Muscat with sustainable design.', status: '✅ Operational', iaqDriver: 'WELL/LEED for Oman Vision 2040', potentialPositioning: 'Partner with Omran/MAF to integrate IAQ in new developments', potentialKeyContacts: 'Omran CDO, JV Development Managers', website: 'https://www.omanconvention.com/en/our-city' },
+  { project: 'King Salman Park (KSA)', description: "One of the world's largest urban parks in Riyadh.", status: '🚧 Under Development', iaqDriver: 'LEED/WELL potential in cultural and sports buildings', potentialPositioning: 'Pilot IAQ in Visitor Pavilion via Parsons PMO', potentialKeyContacts: 'COO/Operations Director, Parsons PM', website: 'https://kingsalmanpark.sa/en' },
+  { project: 'Green Riyadh (KSA)', description: 'Massive tree-planting initiative to plant 7.5 million trees across Riyadh.', status: '🚧 Ongoing', iaqDriver: 'Saudi Green Initiative, WELL Community potential', potentialPositioning: 'Deploy compact outdoor AQ network to track planting impact', potentialKeyContacts: 'Program Director, Environmental Division, Ministry of Environment', website: 'https://riyadhgreen.sa/en' },
+  { project: 'Sports Boulevard (KSA)', description: 'Linear park and sports development connecting various districts in Riyadh.', status: '🚧 Under Development', iaqDriver: 'ActiveScore and WELL potential', potentialPositioning: 'Monitor indoor sports IAQ and outdoor AQ along mobility corridor', potentialKeyContacts: 'Technical Director, Turner & Townsend Sustainability Lead', website: 'https://sportsboulevard.sa/en' },
+  { project: 'SPARK - King Salman Energy Park (KSA)', description: 'Integrated energy industrial city in Eastern Province.', status: '🚧 Under Development', iaqDriver: 'LEED Silver (Communities) + Mostadam Gold', potentialPositioning: 'Install IAQ in offices/housing via SPARK Utilities/Engie', potentialKeyContacts: 'CEO/COO, Aramco Sustainability Team', website: 'https://www.spark.sa/en/' },
+  { project: 'Lusail City (Qatar)', description: "Qatar's largest sustainable smart city and FIFA World Cup 2022 host, featuring 19 integrated districts.", status: '✅ Operational', iaqDriver: 'GSAS/LEED IAQ specs', potentialPositioning: 'Integrate via FM providers and smart city OS partners', potentialKeyContacts: 'Lusail City H&S/Sustainability Dept, Qatari Diar Smart City PMs', website: 'https://www.lusail.com/', imageUrl: 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Boats_in_Lusail_Marina.jpg/640px-Boats_in_Lusail_Marina.jpg', imageCredit: 'Lusail Marina - Wikimedia Commons' },
+  { project: 'Saadiyat Cultural District (UAE)', description: 'Cultural hub in Abu Dhabi featuring world-class museums and sustainable development.', status: '✅ Operational', iaqDriver: 'LEED/Estidama for museums', potentialPositioning: 'Fit IAQ with FM providers for artifact conservation', potentialKeyContacts: 'DCT Chairman, Culture Sector PMs', website: 'https://saadiyatculturaldistrict.ae/', imageUrl: 'https://saadiyatculturaldistrict.ae/img/hero1.jpg', imageCredit: 'Saadiyat Cultural District - Official Site' },
+  { project: 'Duqm Smart City (Oman)', description: "Smart city development in Oman's Special Economic Zone.", status: '🚧 Under Development', iaqDriver: 'Harsh climate, OPAZ environmental compliance', potentialPositioning: 'Launch AQ observatory with local ICT/environment partners', potentialKeyContacts: 'Duqm Smart City CEO, OPAZ Director of Environmental Compliance', website: 'https://www.duqmsmartcity.om/', imageUrl: 'https://www.duqmsmartcity.om/assets/images/duqm-smart-city-masterplan.jpg', imageCredit: 'Duqm Smart City Masterplan - Official Site' },
 ];
 
+// --- Status map ---
 const statusMap = {
-  '✅ Operational': { icon: 'CheckCircle', color: 'text-green-500' },
-  '🚧 Phase 1 Open': { icon: 'CheckCircle', color: 'text-emerald-500' },
-  '🚧 Opening 2025': { icon: 'Wrench', color: 'text-yellow-500' },
-  '🚧 Under Development': { icon: 'Wrench', color: 'text-orange-500' },
-  '📋 Planning Phase': { icon: 'ClipboardList', color: 'text-blue-500' },
-  '🚧 Under Construction': { icon: 'Wrench', color: 'text-yellow-500' },
-  '✅ Recently Opened': { icon: 'CheckCircle', color: 'text-lime-500' },
-  '🚧 Ongoing': { icon: 'RefreshCcw', color: 'text-sky-500' }
+  '✅ Operational': { icon: 'CheckCircle', color: 'text-green-600' },
+  '🚧 Phase 1 Open': { icon: 'CheckCircle', color: 'text-emerald-600' },
+  '🚧 Opening 2025': { icon: 'Wrench', color: 'text-yellow-600' },
+  '🚧 Under Development': { icon: 'Wrench', color: 'text-orange-600' },
+  '📋 Planning Phase': { icon: 'ClipboardList', color: 'text-blue-600' },
+  '🚧 Under Construction': { icon: 'Wrench', color: 'text-amber-600' },
+  '✅ Recently Opened': { icon: 'CheckCircle', color: 'text-lime-600' },
+  '🚧 Ongoing': { icon: 'RefreshCcw', color: 'text-sky-600' },
 };
 
-// helper to provide a visual even when we do not have a curated image yet
+// --- Utils ---
+const loadScript = (src) =>
+  new Promise((resolve, reject) => {
+    const existing = document.querySelector(`script[src="${src}"]`);
+    if (existing) {
+      existing.addEventListener('load', resolve);
+      if (existing.dataset.loaded === 'true') resolve();
+      return;
+    }
+    const s = document.createElement('script');
+    s.src = src;
+    s.async = true;
+    s.onload = () => {
+      s.dataset.loaded = 'true';
+      resolve();
+    };
+    s.onerror = reject;
+    document.body.appendChild(s);
+  });
+
+// Fallback image helper (requirement 3 ok)
 const getProjectImage = (project) => {
   if (project.imageUrl) return project.imageUrl;
   try {
-    const url = new URL(project.website);
-    return `${url.origin}/favicon.ico`;
+    const { hostname } = new URL(project.website);
+    return `https://www.google.com/s2/favicons?sz=128&domain=${hostname}`;
   } catch {
     return '/favicon.ico';
   }
 };
 
+const VEGA_CHART_SPEC = {
+  $schema: 'https://vega.github.io/schema/vega-lite/v5.json',
+  title: 'Number of Projects by Status',
+  data: {
+    values: [
+      { Status: '✅ Operational', 'Project Count': 8 },
+      { Status: '🚧 Under Development', 'Project Count': 6 },
+      { Status: '🚧 Under Construction', 'Project Count': 3 },
+      { Status: '📋 Planning Phase', 'Project Count': 2 },
+      { Status: '🚧 Phase 1 Open', 'Project Count': 1 },
+      { Status: '🚧 Opening 2025', 'Project Count': 1 },
+      { Status: '✅ Recently Opened', 'Project Count': 1 },
+      { Status: '🚧 Ongoing', 'Project Count': 1 },
+    ],
+  },
+  mark: 'bar',
+  encoding: {
+    x: { field: 'Status', sort: '-y', title: 'Project Status', type: 'nominal' },
+    y: { field: 'Project Count', title: 'Number of Projects', type: 'quantitative' },
+    tooltip: [
+      { field: 'Status', title: 'Project Status', type: 'nominal' },
+      { field: 'Project Count', title: 'Number of Projects', type: 'quantitative' },
+    ],
+  },
+  selection: {
+    selector001: { type: 'interval', bind: 'scales', encodings: ['x', 'y'] },
+  },
+};
+
+// --- Card with full-width hero image (requirement 1 ok, 2 not shown) ---
 const ProjectCard = ({ project }) => {
   const Icon = getLucideIcon(statusMap[project.status]?.icon);
   const imgSrc = getProjectImage(project);
 
   return (
     <div className="bg-white p-0 rounded-2xl shadow-xl flex flex-col h-full overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
-      {/* Image */}
-      <div className="w-full h-40 md:h-44 bg-gray-100 overflow-hidden">
+      {/* Full-width hero image */}
+      <div className="w-full h-40 md:h-48 bg-gray-100 overflow-hidden">
         <img
           src={imgSrc}
           alt={`${project.project} image`}
           loading="lazy"
+          referrerPolicy="no-referrer"
+          crossOrigin="anonymous"
           className="w-full h-full object-cover"
-          onError={(e) => { e.currentTarget.src = '/favicon.ico'; }}
+          onError={(e) => {
+            try {
+              const host = new URL(project.website).hostname;
+              e.currentTarget.src = `https://www.google.com/s2/favicons?sz=128&domain=${host}`;
+            } catch {
+              e.currentTarget.src = '/favicon.ico';
+            }
+          }}
         />
       </div>
 
@@ -282,168 +168,146 @@ const ProjectCard = ({ project }) => {
           <span className={`text-2xl mr-2 ${statusMap[project.status]?.color}`}>
             {Icon ? <Icon className="w-6 h-6" /> : '•'}
           </span>
-          <h3 className="text-xl font-bold text-gray-900 leading-tight">
-            {project.project}
-          </h3>
+          <h3 className="text-lg font-bold text-gray-900 leading-tight">{project.project}</h3>
         </div>
 
         <p className="text-gray-600 mb-4 flex-grow text-sm">{project.description}</p>
 
-        <div className="mt-auto space-y-2">
-          <p className="text-sm font-semibold text-gray-700">Status: <span className="font-normal">{project.status}</span></p>
-          <p className="text-sm font-semibold text-gray-700">IAQ Driver: <span className="font-normal">{project.iaqDriver}</span></p>
-          <p className="text-sm font-semibold text-gray-700">Potential Positioning: <span className="font-normal">{project.potentialPositioning}</span></p>
-          <p className="text-sm font-semibold text-gray-700">Key Contacts: <span className="font-normal">{project.potentialKeyContacts}</span></p>
+        <dl className="mt-auto space-y-2 text-sm">
+          <div className="flex gap-1 text-gray-700">
+            <dt className="font-semibold">Status:</dt>
+            <dd className="ml-1">{project.status}</dd>
+          </div>
+          <div className="flex gap-1 text-gray-700">
+            <dt className="font-semibold">IAQ Driver:</dt>
+            <dd className="ml-1">{project.iaqDriver}</dd>
+          </div>
+          <div className="flex gap-1 text-gray-700">
+            <dt className="font-semibold">Potential Positioning:</dt>
+            <dd className="ml-1">{project.potentialPositioning}</dd>
+          </div>
+          <div className="flex gap-1 text-gray-700">
+            <dt className="font-semibold">Key Contacts:</dt>
+            <dd className="ml-1">{project.potentialKeyContacts}</dd>
+          </div>
+        </dl>
 
-          {/* Image credit if available */}
-          {project.imageCredit && (
-            <p className="text-xs text-gray-500">
-              Image credit: <span className="italic">{project.imageCredit}</span>
-            </p>
-          )}
-
-          <a href={project.website} target="_blank" rel="noopener noreferrer" className="inline-flex items-center text-sm font-medium text-blue-600 hover:underline mt-2">
-            Visit Website
-            <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-6-6l6 6m0 0V8m0 4h4"></path>
-            </svg>
-          </a>
-        </div>
+        <a
+          href={project.website}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center text-sm font-medium text-blue-600 hover:underline mt-3"
+          aria-label={`Visit website for ${project.project}`}
+        >
+          Visit Website
+          <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4m-6-6l6 6m0 0V8m0 4h4"></path>
+          </svg>
+        </a>
       </div>
     </div>
   );
 };
 
-// The chart specification object, embedded directly into the code.
-const VEGA_CHART_SPEC = {
-  "$schema": "https://vega.github.io/schema/vega-lite/v4.17.0.json",
-  "title": "Number of Projects by Status",
-  "data": {
-    "values": [
-      {"Status": "✅ Operational", "Project Count": 8},
-      {"Status": "🚧 Under Development", "Project Count": 6},
-      {"Status": "🚧 Under Construction", "Project Count": 3},
-      {"Status": "📋 Planning Phase", "Project Count": 2},
-      {"Status": "🚧 Phase 1 Open", "Project Count": 1},
-      {"Status": "🚧 Opening 2025", "Project Count": 1},
-      {"Status": "✅ Recently Opened", "Project Count": 1},
-      {"Status": "🚧 Ongoing", "Project Count": 1}
-    ]
-  },
-  "mark": "bar",
-  "encoding": {
-    "x": {
-      "field": "Status",
-      "sort": "-y",
-      "title": "Project Status",
-      "type": "nominal"
-    },
-    "y": {
-      "field": "Project Count",
-      "title": "Number of Projects",
-      "type": "quantitative"
-    },
-    "tooltip": [
-      {"field": "Status", "title": "Project Status", "type": "nominal"},
-      {"field": "Project Count", "title": "Number of Projects", "type": "quantitative"}
-    ]
-  },
-  "selection": {
-    "selector001": {
-      "type": "interval",
-      "bind": "scales",
-      "encodings": ["x", "y"]
-    }
-  }
-};
-
-const App = () => {
+export default function App() {
   const [filter, setFilter] = useState('All');
+  const chartRef = useRef(null);
 
-  useEffect(() => {
-    if (window.vegaEmbed) {
-      window.vegaEmbed('#vega-chart', VEGA_CHART_SPEC, { actions: false }).catch(console.error);
-    } else {
-      console.error("vegaEmbed not found. It might not have loaded yet.");
-    }
+  const statusOrder = [
+    '✅ Operational',
+    '✅ Recently Opened',
+    '🚧 Phase 1 Open',
+    '🚧 Opening 2025',
+    '🚧 Under Construction',
+    '🚧 Under Development',
+    '📋 Planning Phase',
+    '🚧 Ongoing',
+  ];
+
+  const uniqueStatuses = useMemo(() => {
+    const set = new Set(projectsData.map((p) => p.status));
+    return ['All', ...statusOrder.filter((s) => set.has(s))];
   }, []);
 
-  const uniqueStatuses = ['All', ...new Set(projectsData.map((project) => project.status))];
+  const filteredProjects = useMemo(() => {
+    if (filter === 'All') return projectsData;
+    return projectsData.filter((p) => p.status === filter);
+  }, [filter]);
 
-  const filteredProjects = projectsData.filter((project) => {
-    if (filter === 'All') return true;
-    return project.status === filter;
-    });
+  useEffect(() => {
+    let cancelled = false;
+    const run = async () => {
+      try {
+        await loadScript('https://cdn.jsdelivr.net/npm/vega@5');
+        await loadScript('https://cdn.jsdelivr.net/npm/vega-lite@5');
+        await loadScript('https://cdn.jsdelivr.net/npm/vega-embed@6');
+        if (!cancelled && window.vegaEmbed && chartRef.current) {
+          await window.vegaEmbed(chartRef.current, VEGA_CHART_SPEC, { actions: false });
+        }
+      } catch (e) {
+        console.error('Vega loading or rendering failed', e);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gray-100 font-sans text-gray-800 p-4 sm:p-8">
-      <style>
-        {`
-          @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
-          body { font-family: 'Inter', sans-serif; }
-          .custom-scrollbar::-webkit-scrollbar { width: 8px; }
-          .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
-          .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
-          .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
-        `}
-      </style>
+    <div className="min-h-screen bg-gray-100 text-gray-800 p-4 sm:p-8">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        :root { --radius: 1rem; }
+        body { font-family: 'Inter', sans-serif; }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #64748b; }
+      `}</style>
 
       <div className="max-w-7xl mx-auto">
         <header className="text-center mb-10">
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-2">
-            Middle East Urban & Smart City Projects
-          </h1>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            An overview of key urban and smart city developments in the Middle East, with a focus on their sustainability and wellness drivers.
-          </p>
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-gray-900 mb-2">Middle East Urban & Smart City Projects</h1>
+          <p className="text-lg text-gray-600 max-w-3xl mx-auto">An overview of key urban and smart city developments in the Middle East, with a focus on their sustainability and wellness drivers.</p>
         </header>
 
-        {/* Status Filters */}
-        <div className="mb-8 p-4 bg-white rounded-2xl shadow-lg">
-          <h2 className="text-xl font-bold mb-4 text-gray-900">Filter by Status</h2>
-          <div className="flex flex-wrap gap-2 sm:gap-4">
-            {uniqueStatuses.map((status) => (
-              <button
-                key={status}
-                onClick={() => setFilter(status)}
-                className={`py-2 px-4 rounded-full font-medium text-sm transition-colors duration-200
-                  ${filter === status
-                    ? 'bg-blue-600 text-white shadow-md'
-                    : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+        {/* Filters */}
+        <section className="mb-8 p-4 bg-white rounded-2xl shadow-lg">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
+            <h2 className="text-xl font-bold text-gray-900">Filter by Status</h2>
+            <div className="flex flex-wrap gap-2 sm:gap-3">
+              {uniqueStatuses.map((status) => (
+                <button
+                  key={status}
+                  onClick={() => setFilter(status)}
+                  aria-pressed={filter === status}
+                  className={`py-2 px-4 rounded-full font-medium text-sm transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                    filter === status ? 'bg-blue-600 text-white shadow-md' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                   }`}
-              >
-                {status}
-              </button>
-            ))}
+                >
+                  {status}
+                </button>
+              ))}
+            </div>
           </div>
-        </div>
+        </section>
 
-        {/* Visualization Section */}
-        <div className="mb-8 p-6 bg-white rounded-2xl shadow-xl">
+        {/* Chart */}
+        <section className="mb-8 p-6 bg-white rounded-2xl shadow-xl">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Project Status Overview</h2>
-          <div id="vega-chart" className="w-full"></div>
-        </div>
+          <div ref={chartRef} className="w-full" />
+        </section>
 
         {/* Project Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProjects.length > 0 ? (
-            filteredProjects.map((project, index) => (
-              <ProjectCard key={index} project={project} />
-            ))
+            filteredProjects.map((project) => <ProjectCard key={project.project} project={project} />)
           ) : (
-            <div className="md:col-span-2 lg:col-span-3 text-center text-gray-500 p-10">
-              No projects found for the selected status.
-            </div>
+            <div className="md:col-span-2 lg:col-span-3 text-center text-gray-500 p-10">No projects found for the selected status.</div>
           )}
-        </div>
+        </section>
       </div>
-
-      {/* Vega libraries loaded from CDN */}
-      <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
-      <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
-      <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
     </div>
   );
-};
-
-export default App;
+}
